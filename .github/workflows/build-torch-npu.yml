@@ -68,6 +68,12 @@ jobs:
           pip install --upgrade pip setuptools wheel
           pip install numpy pyyaml typing_extensions cmake ninja six
 
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache
+
       - name: Configure ccache
         run: |
           ccache --set-config=cache_dir=~/.ccache
@@ -75,6 +81,9 @@ jobs:
           ccache --set-config=compression=true
           ccache -p
           ccache -z  # Zero statistics counter
+          # Only set CMAKE compiler launchers, not CC/CXX to avoid ccache being used for assembler
+          echo "CMAKE_C_COMPILER_LAUNCHER=ccache" >> $GITHUB_ENV
+          echo "CMAKE_CXX_COMPILER_LAUNCHER=ccache" >> $GITHUB_ENV
 
       - name: Checkout PyTorch
         uses: actions/checkout@v4
@@ -112,6 +121,7 @@ jobs:
           export BUILD_TEST=0
           export MAX_JOBS=$(nproc)
           export CMAKE_BUILD_TYPE=Release
+          export USE_CCACHE=1
           python setup.py build develop
 
       - name: Show ccache statistics after PyTorch build
