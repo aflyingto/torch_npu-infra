@@ -110,7 +110,10 @@ jobs:
             cat .gitmodules
           fi
           git submodule sync
-          git submodule update --init --recursive || true
+          # Initialize op-plugin submodule specifically (required for build)
+          git submodule update --init third_party/op-plugin
+          # Try to init other submodules, but don't fail if some are unavailable
+          git submodule update --init --recursive || echo "Some submodules may not be available"
 
       - name: Build PyTorch from source
         run: |
