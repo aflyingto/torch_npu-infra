@@ -65,7 +65,7 @@ jobs:
       - name: Install Python build dependencies
         run: |
           pip install --upgrade pip setuptools wheel
-          pip install numpy pyyaml typing_extensions cmake ninja
+          pip install numpy pyyaml typing_extensions cmake ninja six
 
       - name: Configure ccache
         run: |
