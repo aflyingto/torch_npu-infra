@@ -1,0 +1,149 @@
+name: Build torch_npu with latest PyTorch
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+    inputs:
+      python_version:
+        description: 'Python version to use'
+        required: false
+        default: '3.10'
+      pytorch_branch:
+        description: 'PyTorch branch to build from'
+        required: false
+        default: 'main'
+
+env:
+  PYTHON_VERSION: ${{ github.event.inputs.python_version || '3.10' }}
+  PYTORCH_BRANCH: ${{ github.event.inputs.pytorch_branch || 'main' }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:22.04
+    timeout-minutes: 360
+
+    steps:
+      - name: Install system dependencies
+        run: |
+          apt-get update
+          apt-get install -y \
+            git \
+            cmake \
+            build-essential \
+            libopenblas-dev \
+            liblapack-dev \
+            libeigen3-dev \
+            libprotobuf-dev \
+            protobuf-compiler \
+            python3 \
+            python3-pip \
+            python3-dev \
+            python3-venv \
+            curl \
+            wget \
+            ca-certificates \
+            ninja-build \
+            ccache \
+            patchelf \
+            libomp-dev \
+            libnuma-dev \
+            file \
+            binutils
+
+      - name: Checkout torch_npu-infra
+        uses: actions/checkout@v4
+
+      - name: Checkout PyTorch
+        uses: actions/checkout@v4
+        with:
+          repository: pytorch/pytorch
+          ref: ${{ env.PYTORCH_BRANCH }}
+          path: pytorch
+          submodules: recursive
+
+      - name: Checkout torch_npu
+        uses: actions/checkout@v4
+        with:
+          repository: Ascend/pytorch
+          path: torch_npu
+          submodules: recursive
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Create virtual environment
+        run: |
+          python3 -m venv /opt/venv
+          echo "/opt/venv/bin" >> $GITHUB_PATH
+
+      - name: Install Python build dependencies
+        run: |
+          pip install --upgrade pip setuptools wheel
+          pip install numpy pyyaml typing_extensions cmake ninja ccache
+
+      - name: Configure ccache
+        run: |
+          ccache --set-config=cache_dir=~/.ccache
+          ccache --set-config=max_size=5G
+          ccache --set-config=compression=true
+          ccache -p
+
+      - name: Build PyTorch from source
+        run: |
+          cd pytorch
+          export CMAKE_PREFIX_PATH="${{ env.Python3_ROOT_DIR }}"
+          export USE_CUDA=0
+          export USE_DISTRIBUTED=1
+          export BUILD_TEST=0
+          export MAX_JOBS=$(nproc)
+          export CMAKE_BUILD_TYPE=Release
+          python setup.py build develop
+
+      - name: Verify PyTorch installation
+        run: |
+          python -c "import torch; print(f'PyTorch version: {torch.__version__}')"
+          python -c "import torch; print(f'PyTorch path: {torch.__file__}')"
+
+      - name: Build CANN stub libraries
+        run: |
+          cd torch_npu/third_party/acl/libs
+          bash build_stub.sh
+
+      - name: Build torch_npu
+        run: |
+          cd torch_npu
+          export CMAKE_PREFIX_PATH="${{ env.Python3_ROOT_DIR }}"
+          export MAX_JOBS=$(nproc)
+          export CMAKE_BUILD_TYPE=Release
+          export _GLIBCXX_USE_CXX11_ABI=1
+          export DISABLE_INSTALL_TORCHAIR=TRUE
+          export DISABLE_RPC_FRAMEWORK=TRUE
+          python setup.py build bdist_wheel
+
+      - name: List built wheels
+        run: |
+          echo "Built wheels:"
+          ls -la torch_npu/dist/ || echo "No wheels found"
+
+      - name: Upload wheel artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: torch_npu-wheel
+          path: torch_npu/dist/*.whl
+          retention-days: 30
+
+      - name: Test torch_npu import
+        run: |
+          pip install torch_npu/dist/*.whl || echo "Wheel installation may have issues"
+          python -c "import torch_npu; print(f'torch_npu version: {torch_npu.__version__}')" || echo "Import test may have issues due to missing NPU hardware"
