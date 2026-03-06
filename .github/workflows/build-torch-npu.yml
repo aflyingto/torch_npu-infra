@@ -72,7 +72,13 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.ccache
-          key: ${{ runner.os }}-ccache
+          # Include Python version and PyTorch branch in key for better cache isolation
+          key: ${{ runner.os }}-ccache-py${{ env.PYTHON_VERSION }}-torch-${{ env.PYTORCH_BRANCH }}-${{ github.run_id }}
+          # Fallback to partial match (same Python and PyTorch branch)
+          restore-keys: |
+            ${{ runner.os }}-ccache-py${{ env.PYTHON_VERSION }}-torch-${{ env.PYTORCH_BRANCH }}-
+            ${{ runner.os }}-ccache-py${{ env.PYTHON_VERSION }}-
+            ${{ runner.os }}-ccache-
 
       - name: Configure ccache
         run: |
