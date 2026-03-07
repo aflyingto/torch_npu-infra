@@ -91,17 +91,27 @@ python setup.py build bdist_wheel
 
 ### 问题1: PyTorch API 不兼容
 
-**现象：** `no member named 'blocks'`、`process_events() marked 'override', but does not override`
+**现象：**
+```
+error: no member named 'blocks' in 'BlockPool'; did you mean 'blocks_'?
+error: cannot convert 'at_npu::native::BlockPool' to 'at::HostBlockPool<...>&'
+error: 'void process_events()' marked 'override', but does not override
+```
 
-**原因：** PyTorch main 分支 API 变化，torch_npu 未适配
+**原因：** PyTorch main 分支将 `BlockPool` 定义为类型别名，与 torch_npu 自定义的 `BlockPool` 结构体冲突
 
-**解决方案：** 使用 patch 修复兼容性问题
+**解决方案：** 使用 patch 重命名 torch_npu 的 `BlockPool` 为 `NPUBlockPool`
 
 ```bash
 # 在 torch_npu 目录应用 patch
 cd torch_npu
 git apply /path/to/patches/0001-fix-pytorch-main-compatibility.patch
 ```
+
+**Patch 修改内容：**
+1. `struct BlockPool` → `struct NPUBlockPool`
+2. 移除 `process_events()` 的 `override` 关键字
+3. 更新所有 `BlockPool` 引用为 `NPUBlockPool`
 
 **Patch 制作方法：**
 

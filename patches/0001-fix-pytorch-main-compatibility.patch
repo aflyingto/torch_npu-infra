@@ -1,20 +1,112 @@
 From: torch_npu-infra <torch_npu-infra@example.com>
 Date: Fri, 7 Mar 2026 00:00:00 +0000
-Subject: [PATCH] Fix compatibility with PyTorch main branch CachingHostAllocator API
+Subject: [PATCH] Fix compatibility with PyTorch main branch CachingHostAllocator
 
 PyTorch main branch changed the CachingHostAllocatorImpl interface:
-- process_events() now requires BlockPool& parameter
-- HostBlockPool structure was refactored with new member names
+- BlockPool is now a type alias to HostBlockPool<S_, E_, B_>
+- process_events() signature changed
+- HostBlockPool members renamed (blocks -> blocks_)
 
-This patch removes the 'override' keyword from process_events() in
-NPUExpandableHostAllocatorImpl to avoid compilation errors, since
-torch_npu uses its own BlockPool structure and process_events implementation.
+This patch:
+1. Renames torch_npu's BlockPool to NPUBlockPool to avoid name conflict
+2. Removes override keyword from process_events()
+3. Updates all references to use NPUBlockPool
 
 diff --git a/torch_npu/csrc/core/npu/CachingHostAllocator.cpp b/torch_npu/csrc/core/npu/CachingHostAllocator.cpp
 index 1234567..abcdefg 100644
 --- a/torch_npu/csrc/core/npu/CachingHostAllocator.cpp
 +++ b/torch_npu/csrc/core/npu/CachingHostAllocator.cpp
-@@ -885,7 +885,7 @@ private:
+@@ -46,8 +46,8 @@ using Block = at::HostBlock<c10_npu::NPUStream>;
+ namespace at_npu::native {
+ constexpr size_t kMinBlockSize = 512;                 // all sizes are rounded to at least 512 bytes
+ constexpr size_t segmentSize = 20971520;              // segment size 20M
+ constexpr size_t deviceTotalSize = 68719476736;       // 64 GB
+ 
+ struct ExpandableBlock;
+ using Comparison = bool (*)(const ExpandableBlock *, const ExpandableBlock *);
+ static bool BlockComparatorSize(const ExpandableBlock *a, const ExpandableBlock *b);
+ static bool BlockComparatorAddress(const ExpandableBlock *a, const ExpandableBlock *b);
+ 
+-struct BlockPool {
++struct NPUBlockPool {
+     std::set<ExpandableBlock *, Comparison> blocks;
+     std::set<ExpandableBlock *, Comparison> unmapped;
+-    BlockPool() : blocks(BlockComparatorSize), unmapped(BlockComparatorAddress) {
++    NPUBlockPool() : blocks(BlockComparatorSize), unmapped(BlockComparatorAddress) {
+     }
+ };
+ 
+=======
+@@ -58,7 +58,7 @@ struct ExpandableSegment;
+ 
+ struct ExpandableBlock : at::HostBlock<c10_npu::NPUStream>{
+     size_t requested_size{};  // memory originally requested
+-    BlockPool *pool{};        // owning memory pool
++    NPUBlockPool *pool{};        // owning memory pool
+     bool mapped{ true };    // is the virtual address range this Block references
+                             // backed by physical pages. Always true when
+                             // expandable_segment_ is null. When false
+=======
+@@ -72,7 +72,7 @@ struct ExpandableBlock : at::HostBlock<c10_npu::NPUStream>{
+         {}
+ 
+-    ExpandableBlock(const size_t size, BlockPool *pool, void *ptr)
++    ExpandableBlock(const size_t size, NPUBlockPool *pool, void *ptr)
+         : HostBlock(size, ptr),
+           pool(pool),
+           prev(nullptr),
+=======
+@@ -407,7 +407,7 @@ struct ExpandableSegment {
+     // begin must be aligned to segment_size_.
+     // returns the actual range mapped, which may be
+     // greater than requested if size is not aligned to segment_size_.
+     // return size of 0 indicates OOM
+-    SegmentRange map(SegmentRange range, BlockPool *pool)
++    SegmentRange map(SegmentRange range, NPUBlockPool *pool)
+     {
+         auto begin = segmentLeft(range.ptr);
+=======
+@@ -545,7 +545,7 @@ struct ExpandableSegment {
+ };
+ 
+ struct AllocParams {
+-    AllocParams(size_t size, BlockPool *pool)
++    AllocParams(size_t size, NPUBlockPool *pool)
+         : search_key(size),
+           pool(pool),
+           err(ACL_ERROR_NONE)
+=======
+@@ -557,7 +557,7 @@ struct AllocParams {
+ 
+     ExpandableBlock search_key;
+ 
+-    BlockPool *pool;
++    NPUBlockPool *pool;
+ 
+     ExpandableBlock *block{};
+ 
+=======
+@@ -687,7 +687,7 @@ private:
+     }
+ 
+ private:
+-    BlockPool blocks_pool;
++    NPUBlockPool blocks_pool;
+ 
+     std::mutex mutex;
+ 
+=======
+@@ -837,7 +837,7 @@ private:
+     }
+ 
+     /* * combine previously split blocks. returns the size of the subsumed block, or 0 on failure. * */
+-    size_t try_merge_blocks(ExpandableBlock *dst, ExpandableBlock *src, BlockPool &pool)
++    size_t try_merge_blocks(ExpandableBlock *dst, ExpandableBlock *src, NPUBlockPool &pool)
+     {
+         if (!src || src->allocated_ || src->event_count_ > 0 || !src->streams_.empty() || dst->mapped != src->mapped) {
+             return 0;
+=======
+@@ -888,7 +888,7 @@ private:
          pool.blocks.insert(block);
      }
  
@@ -23,3 +115,44 @@ index 1234567..abcdefg 100644
      {
          while (true) {
              // Avoid calling cudaEventDestroy while holding a mutex, so move
+=======
+@@ -1015,7 +1015,7 @@ private:
+     // returns the smallest possible address in any segment
+     // where there is enough free address space to fit size
+     // may be composed of free and unmapped segments
+-    ExpandableBlock *find_expandable_block(BlockPool *pool, size_t size)
++    ExpandableBlock *find_expandable_block(NPUBlockPool *pool, size_t size)
+     {
+         ExpandableBlock key(0);
+ 
+=======
+@@ -1064,7 +1064,7 @@ private:
+         return candidate;
+     }
+ 
+-    bool map_block(ExpandableBlock *to_map, size_t size, BlockPool *map_pool)
++    bool map_block(ExpandableBlock *to_map, size_t size, NPUBlockPool *map_pool)
+     {
+         TORCH_INTERNAL_ASSERT(!to_map->mapped && size <= to_map->size_, PTA_ERROR(ErrCode::VALUE));
+ 
+=======
+@@ -1076,7 +1076,7 @@ private:
+         TORCH_INTERNAL_ASSERT(mapped_range.ptr == to_map->ptr_ && mapped_range.size >= size,
+             PTA_ERROR(ErrCode::INTERNAL));
+ 
+-        BlockPool &pool = *to_map->pool;
++        NPUBlockPool &pool = *to_map->pool;
+         pool.unmapped.erase(to_map);
+         to_map->mapped = true;
+ 
+=======
+@@ -1101,7 +1101,7 @@ private:
+         return true;
+     }
+ 
+-    ExpandableBlock *try_allocate_expandable_block(BlockPool *pool, size_t size)
++    ExpandableBlock *try_allocate_expandable_block(NPUBlockPool *pool, size_t size)
+     {
+         ExpandableBlock *candidate = find_expandable_block(pool, size);
+         // Candidate is now a list free/unmapped blocks with at least size room:
+=======
