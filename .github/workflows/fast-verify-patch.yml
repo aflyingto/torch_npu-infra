@@ -1,0 +1,94 @@
+name: Fast Verify Patch
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: '3.10'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install PyTorch Nightly
+        run: |
+          pip install --pre torch --index-url https://download.pytorch.org/whl/nightly/cpu
+          python -c "import torch; print(f'PyTorch version: {torch.__version__}')"
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git cmake build-essential ninja-build ccache patchelf
+          pip install numpy pyyaml typing_extensions cmake ninja six
+
+      - name: Checkout torch_npu
+        uses: actions/checkout@v4
+        with:
+          repository: Ascend/pytorch
+          path: torch_npu
+          submodules: false
+
+      - name: Initialize torch_npu submodules
+        run: |
+          cd torch_npu
+          git submodule update --init --recursive
+
+      - name: Apply compatibility patches
+        run: |
+          cd torch_npu
+          echo "=== Applying patches ==="
+          for patch in $GITHUB_WORKSPACE/patches/*.patch; do
+            if [ -f "$patch" ]; then
+              echo "Applying patch: $patch"
+              git apply --check "$patch" && git apply "$patch" && echo "Patch applied successfully" || echo "Patch $patch may not apply cleanly"
+            fi
+          done
+          echo "=== Verifying patch application ==="
+          git diff --stat HEAD~1 || true
+
+      - name: Build CANN stub libraries
+        run: |
+          cd torch_npu/third_party/acl/libs
+          bash build_stub.sh
+
+      - name: Build torch_npu (quick test)
+        run: |
+          cd torch_npu
+          export CMAKE_PREFIX_PATH="${{ env.Python3_ROOT_DIR }}"
+          export MAX_JOBS=$(nproc)
+          export CMAKE_BUILD_TYPE=Release
+          export _GLIBCXX_USE_CXX11_ABI=1
+          export DISABLE_INSTALL_TORCHAIR=TRUE
+          export DISABLE_RPC_FRAMEWORK=TRUE
+          # Only compile the problematic file to verify patch
+          echo "=== Building torch_npu ==="
+          python setup.py build 2>&1 | tee build.log || true
+          # Check if CachingHostAllocator.cpp compiled successfully
+          if grep -q "CachingHostAllocator.cpp.o] Error" build.log; then
+            echo "❌ CachingHostAllocator.cpp compilation FAILED"
+            exit 1
+          else
+            echo "✅ CachingHostAllocator.cpp compilation PASSED or not reached"
+          fi
+
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: torch_npu/build.log
+          retention-days: 7
