@@ -12,6 +12,8 @@ torch_npu-infra/
 │       └── test-submodules.yml     # 子模块测试 workflow
 ├── doc/
 │   └── pytorch-torch_npu-compatibility-analysis.md  # 兼容性分析报告
+├── patches/
+│   └── 0001-fix-pytorch-main-compatibility.patch   # PyTorch兼容性patch
 ├── skills/
 │   └── torch_npu-Build/
 │       └── SKILL.md                # torch_npu 构建技能文档
@@ -55,6 +57,7 @@ torch_npu-infra/
 
 ## 最新变更
 
+- 2026-03-07: 添加 PyTorch main 分支兼容性 patch，修复 CachingHostAllocator API 变化问题
 - 2026-03-07: 添加 PyTorch/torch_npu 兼容性问题分析报告 (Issue #1)
 - 2026-03-07: 精简 SKILL 文档，移除完整 workflow 模板，保留构建步骤提炼
 - 2026-03-07: 添加 torch_npu 构建 SKILL 文档
