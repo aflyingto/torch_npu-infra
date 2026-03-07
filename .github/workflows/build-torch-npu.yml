@@ -103,27 +103,7 @@ jobs:
       - name: Initialize torch_npu submodules
         run: |
           cd torch_npu
-          # Update .gitmodules to use correct GitHub URLs
-          if [ -f .gitmodules ]; then
-            sed -i 's|https://gitee.com/mirrors/|https://github.com/|g' .gitmodules
-            sed -i 's|https://gitee.com/|https://github.com/|g' .gitmodules
-            # Fix incorrect GitHub URLs
-            sed -i 's|https://github.com/fmt.git|https://github.com/fmtlib/fmt.git|g' .gitmodules
-            sed -i 's|https://github.com/googletest.git|https://github.com/google/googletest.git|g' .gitmodules
-            sed -i 's|https://github.com/nlohmann-json.git|https://github.com/nlohmann/json.git|g' .gitmodules
-            cat .gitmodules
-          fi
-          git submodule sync
-          # Initialize required submodules one by one
-          git submodule update --init third_party/op-plugin || true
-          git submodule update --init third_party/fmt || true
-          git submodule update --init third_party/hccl || true
-          git submodule update --init third_party/googletest || true
-          git submodule update --init third_party/nlohmann || true
-          # Try to init all other submodules
-          git submodule update --init --recursive || echo "Some submodules may not be available"
-          # List what we have
-          ls -la third_party/
+          git submodule update --init --recursive
 
       - name: Build PyTorch from source
         run: |
