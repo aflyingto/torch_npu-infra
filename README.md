@@ -13,6 +13,7 @@ torch_npu-infra/
 ├── doc/
 │   └── pytorch-torch_npu-compatibility-analysis.md  # 兼容性分析报告
 ├── patches/
+│   ├── README.md                  # Patch 记录文件
 │   └── 0001-fix-pytorch-main-compatibility.patch   # PyTorch兼容性patch
 ├── skills/
 │   └── torch_npu-Build/
@@ -57,6 +58,7 @@ torch_npu-infra/
 
 ## 最新变更
 
+- 2026-03-07: 添加 patch 记录文件，记录所有 patch 的关键信息
 - 2026-03-07: 添加 PyTorch main 分支兼容性 patch，修复 CachingHostAllocator API 变化问题
 - 2026-03-07: 添加 PyTorch/torch_npu 兼容性问题分析报告 (Issue #1)
 - 2026-03-07: 精简 SKILL 文档，移除完整 workflow 模板，保留构建步骤提炼
