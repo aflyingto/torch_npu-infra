@@ -80,6 +80,9 @@ jobs:
           pip install --upgrade pip setuptools wheel
           pip install numpy pyyaml typing_extensions cmake ninja six
 
+      - name: Setup ccache directory
+        run: mkdir -p ~/.ccache
+
       - name: Cache ccache
         uses: actions/cache/restore@v4
         with:
