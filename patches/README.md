@@ -32,17 +32,22 @@ error: 'void process_events()' marked 'override', but does not override
 
 **修改位置：**
 - 第 49-54 行：`struct BlockPool` → `struct NPUBlockPool`
-- 第 60 行：`BlockPool *pool` → `NPUBlockPool *pool`
-- 第 75 行：构造函数参数
-- 第 407 行：`map` 函数参数
-- 第 545-559 行：`AllocParams` 结构体
-- 第 687 行：成员变量
-- 第 837 行：`try_merge_blocks` 参数
-- 第 888 行：`process_events` 移除 override
-- 第 1015 行：`find_expandable_block` 参数
-- 第 1064 行：`map_block` 参数
-- 第 1076 行：局部变量
-- 第 1101 行：`try_allocate_expandable_block` 参数
+- 第 60 行：`BlockPool *pool` → `NPUBlockPool *pool`（成员变量）
+- 第 75 行：构造函数参数类型
+- 第 407 行：`map` 函数参数类型
+- 第 545-559 行：`AllocParams` 结构体成员
+- 第 687 行：成员变量 `blocks_pool` 类型
+- 第 837 行：`try_merge_blocks` 参数类型
+- 第 888 行：`process_events` 移除 `override` 关键字
+- 第 1015 行：`find_expandable_block` 参数类型
+- 第 1064 行：`map_block` 参数类型
+- 第 1076 行：局部变量类型
+- 第 1101 行：`try_allocate_expandable_block` 参数类型
+
+**patch 文件格式：**
+- 使用标准 unified diff 格式
+- 每个 hunk 包含正确的上下文行数
+- 文件末尾包含签名 `-- 2.43.0`
 
 **相关链接：**
 - Issue: #1
