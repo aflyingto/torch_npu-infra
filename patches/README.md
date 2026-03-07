@@ -46,7 +46,8 @@ error: 'void process_events()' marked 'override', but does not override
 
 **patch 文件格式：**
 - 使用标准 unified diff 格式
-- 每个 hunk 包含正确的上下文行数
+- 每个 hunk 前必须有空行分隔
+- 每个 hunk header 格式：`@@ -起始行,行数 +起始行,行数 @@ 上下文`
 - 文件末尾包含签名 `-- 2.43.0`
 
 **相关链接：**
