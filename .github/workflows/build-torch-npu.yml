@@ -69,10 +69,12 @@ jobs:
           pip install numpy pyyaml typing_extensions cmake ninja six
 
       - name: Cache ccache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: ~/.ccache
-          key: ${{ runner.os }}-ccache
+          key: ${{ runner.os }}-ccache-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-ccache-
 
       - name: Configure ccache
         run: |
@@ -160,3 +162,10 @@ jobs:
         run: |
           pip install torch_npu/dist/*.whl || echo "Wheel installation may have issues"
           python -c "import torch_npu; print(f'torch_npu version: {torch_npu.__version__}')" || echo "Import test may have issues due to missing NPU hardware"
+
+      - name: Save ccache (always)
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-${{ github.run_id }}
