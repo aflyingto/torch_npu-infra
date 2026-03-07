@@ -1,0 +1,45 @@
+name: Test Submodules
+
+on:
+  push:
+    branches:
+      - dev-cache
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout torch_npu
+        uses: actions/checkout@v4
+        with:
+          repository: Ascend/pytorch
+          path: torch_npu
+          submodules: false
+
+      - name: Initialize submodules
+        run: |
+          cd torch_npu
+          echo "=== 开始初始化子模块 ==="
+          git submodule update --init --recursive
+          echo "=== 子模块初始化完成 ==="
+
+      - name: Verify submodules
+        run: |
+          cd torch_npu
+          echo "=== 验证关键子模块 ==="
+          echo "检查 fmt:"
+          ls -la third_party/fmt/ | head -5
+          echo ""
+          echo "检查 op-plugin:"
+          ls -la third_party/op-plugin/ | head -5
+          echo ""
+          echo "检查 googletest:"
+          ls -la third_party/googletest/ | head -5
+          echo ""
+          echo "检查 nlohmann:"
+          ls -la third_party/nlohmann/ | head -5
+          echo ""
+          echo "=== 所有子模块验证成功 ==="
