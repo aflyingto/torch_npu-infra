@@ -58,6 +58,7 @@ torch_npu-infra/
 
 ## 最新变更
 
+- 2026-03-07: 优化 workflow 触发逻辑，忽略非关键文件变更（文档、LICENSE 等）
 - 2026-03-07: 添加 patch 记录文件，记录所有 patch 的关键信息
 - 2026-03-07: 添加 PyTorch main 分支兼容性 patch，修复 CachingHostAllocator API 变化问题
 - 2026-03-07: 添加 PyTorch/torch_npu 兼容性问题分析报告 (Issue #1)
