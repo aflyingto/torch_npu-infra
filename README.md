@@ -58,6 +58,7 @@ torch_npu-infra/
 
 ## 最新变更
 
+- 2026-03-07: 完善兼容性 patch，重命名 BlockPool 为 NPUBlockPool 解决类型冲突
 - 2026-03-07: 修复 ccache 缓存保存失败问题，在缓存恢复前创建目录
 - 2026-03-07: 优化 workflow 触发逻辑，忽略非关键文件变更（文档、LICENSE 等）
 - 2026-03-07: 添加 patch 记录文件，记录所有 patch 的关键信息
