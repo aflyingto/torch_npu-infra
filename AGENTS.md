@@ -8,6 +8,7 @@ This repository contains infrastructure for building torch_npu with the latest P
 
 - `.github/workflows/build-torch-npu.yml`: GitHub Actions workflow for building torch_npu
 - Build process uses PyTorch main branch source code instead of pre-built wheels
+- `skills/torch_npu-Build/SKILL.md`: Complete build skill documentation
 
 ## Build Process
 
@@ -34,3 +35,21 @@ This repository contains infrastructure for building torch_npu with the latest P
 - torch_npu requires PyTorch to be built from source
 - CANN libraries are stubbed for build purposes
 - op-plugin submodule is required
+
+## Commit Guidelines
+
+**重要：每次提交代码必须同步更新 README.md**
+
+当进行以下操作时，必须更新 README.md：
+
+1. 添加新的 workflow 或修改现有 workflow
+2. 添加新的 SKILL 文档
+3. 修改项目结构或关键配置
+4. 修复重要问题或添加新功能
+
+README.md 应包含：
+- 项目简介和目的
+- 目录结构说明
+- 使用方法
+- 关键文件说明
+- 最新变更记录
