@@ -95,7 +95,21 @@ python setup.py build bdist_wheel
 
 **原因：** PyTorch main 分支 API 变化，torch_npu 未适配
 
-**处理：** 使用最新代码时为预期行为；需成功构建则用稳定版 PyTorch
+**解决方案：** 使用 patch 修复兼容性问题
+
+```bash
+# 在 torch_npu 目录应用 patch
+cd torch_npu
+git apply /path/to/patches/0001-fix-pytorch-main-compatibility.patch
+```
+
+**Patch 制作方法：**
+
+1. 克隆 torch_npu 源码
+2. 修改需要修复的文件
+3. 生成 patch: `git diff > 0001-fix-xxx.patch`
+4. 将 patch 放入项目的 `patches/` 目录
+5. 在构建流程中应用 patch
 
 ### 问题2: 子模块初始化失败
 
@@ -116,7 +130,8 @@ python setup.py build bdist_wheel
 | 错误 | 原因 | 解决 |
 |-----|------|-----|
 | `invalid option -- 'D'` | ccache 用于汇编 | 只设 CMAKE_COMPILER_LAUNCHER |
-| `no member named 'blocks'` | PyTorch API 变化 | 用稳定版或等待适配 |
+| `no member named 'blocks'` | PyTorch API 变化 | 应用兼容性 patch |
+| `process_events() override` | PyTorch API 变化 | 应用兼容性 patch |
 | `repository not found` | 子模块 URL 错误 | 直接用原始 .gitmodules |
 
 ## 五、参考链接

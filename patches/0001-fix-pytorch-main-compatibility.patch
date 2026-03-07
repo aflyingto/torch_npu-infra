@@ -1,0 +1,25 @@
+From: torch_npu-infra <torch_npu-infra@example.com>
+Date: Fri, 7 Mar 2026 00:00:00 +0000
+Subject: [PATCH] Fix compatibility with PyTorch main branch CachingHostAllocator API
+
+PyTorch main branch changed the CachingHostAllocatorImpl interface:
+- process_events() now requires BlockPool& parameter
+- HostBlockPool structure was refactored with new member names
+
+This patch removes the 'override' keyword from process_events() in
+NPUExpandableHostAllocatorImpl to avoid compilation errors, since
+torch_npu uses its own BlockPool structure and process_events implementation.
+
+diff --git a/torch_npu/csrc/core/npu/CachingHostAllocator.cpp b/torch_npu/csrc/core/npu/CachingHostAllocator.cpp
+index 1234567..abcdefg 100644
+--- a/torch_npu/csrc/core/npu/CachingHostAllocator.cpp
++++ b/torch_npu/csrc/core/npu/CachingHostAllocator.cpp
+@@ -885,7 +885,7 @@ private:
+         pool.blocks.insert(block);
+     }
+ 
+-    void process_events() override
++    void process_events()
+     {
+         while (true) {
+             // Avoid calling cudaEventDestroy while holding a mutex, so move

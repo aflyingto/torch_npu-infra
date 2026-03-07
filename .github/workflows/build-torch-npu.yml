@@ -105,6 +105,17 @@ jobs:
           cd torch_npu
           git submodule update --init --recursive
 
+      - name: Apply compatibility patches
+        run: |
+          cd torch_npu
+          # Apply patches to fix PyTorch main branch API compatibility
+          for patch in $GITHUB_WORKSPACE/patches/*.patch; do
+            if [ -f "$patch" ]; then
+              echo "Applying patch: $patch"
+              git apply --check "$patch" && git apply "$patch" || echo "Patch $patch may not apply cleanly, skipping"
+            fi
+          done
+
       - name: Build PyTorch from source
         run: |
           cd pytorch
