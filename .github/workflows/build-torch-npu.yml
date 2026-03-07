@@ -6,10 +6,22 @@ on:
       - main
       - master
       - dev-cache
+    paths-ignore:
+      - '**.md'
+      - 'doc/**'
+      - 'skills/**'
+      - 'LICENSE'
+      - '.gitignore'
   pull_request:
     branches:
       - main
       - master
+    paths-ignore:
+      - '**.md'
+      - 'doc/**'
+      - 'skills/**'
+      - 'LICENSE'
+      - '.gitignore'
   workflow_dispatch:
     inputs:
       python_version:
