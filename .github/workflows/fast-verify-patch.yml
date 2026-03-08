@@ -5,6 +5,8 @@ on:
     branches:
       - main
       - master
+    paths-ignore:
+      - '.github/workflows/fast-build.yml'
   workflow_dispatch:
 
 env:
