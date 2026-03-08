@@ -87,6 +87,12 @@ jobs:
           cd torch_npu
           git submodule update --init --recursive
 
+      - name: Apply PyTorch 2.12+ compatibility patches
+        run: |
+          cd torch_npu
+          git apply --check ../patches/0002-fix-pytorch-2.12-hostblockpool-compatibility.patch
+          git apply ../patches/0002-fix-pytorch-2.12-hostblockpool-compatibility.patch
+
       - name: Build CANN stub libraries
         run: |
           cd torch_npu/third_party/acl/libs
