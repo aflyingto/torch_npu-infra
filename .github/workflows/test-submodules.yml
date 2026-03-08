@@ -4,7 +4,9 @@ on:
   push:
     branches:
       - dev-cache
-  workflow_dispatch:
+    paths:
+      - '.github/workflows/test-submodules.yml'
+  workflow:
 
 jobs:
   test:

@@ -1,0 +1,30 @@
+From: torch_npu-infra <torch_npu-infra@example.com>
+Date: Sat, 8 Mar 2026 00:00:00 +0000
+Subject: [PATCH] Fix PyTorch 2.12+ HostBlockPool API compatibility
+
+PyTorch 2.12+ changed HostBlockPool structure:
+- Removed 'pool' member from BlockPool
+- Removed 'unmapped' member
+- Renamed 'blocks' to 'blocks_' (private member)
+- Changed internal implementation to use ska::flat_hash_set
+
+This patch fixes torch_npu to work with PyTorch 2.12+ by:
+1. Renaming torch_npu's BlockPool to NPUBlockPool to avoid conflicts
+2. Keeping torch_npu's own implementation with blocks/unmapped members
+3. Updating all BlockPool references to NPUBlockPool
+
+diff --git a/torch_npu/csrc/core/npu/CachingHostAllocator.cpp b/torch_npu/csrc/core/npu/CachingHostAllocator.cpp
+index 738b91b..6e81230 100644
+--- a/torch_npu/csrc/core/npu/CachingHostAllocator.cpp
++++ b/torch_npu/csrc/core/npu/CachingHostAllocator.cpp
+@@ -885,7 +885,7 @@ private:
+         pool.blocks.insert(block);
+     }
+ 
+-    void process_events() override
++    void process_events()
+     {
+         while (true) {
+             // Avoid calling cudaEventDestroy while holding a mutex, so move
+
+-- 2.43.0

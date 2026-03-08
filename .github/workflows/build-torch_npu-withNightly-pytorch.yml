@@ -1,4 +1,4 @@
-name: Build torch_npu with latest PyTorch
+name: Build torch_npu with Nightly PyTorch
 
 on:
   push:
@@ -6,22 +6,14 @@ on:
       - main
       - master
       - dev-cache
-    paths-ignore:
-      - '**.md'
-      - 'doc/**'
-      - 'skills/**'
-      - 'LICENSE'
-      - '.gitignore'
+    paths:
+      - '.github/workflows/build-torch_npu-withNightly-pytorch.yml'
   pull_request:
     branches:
       - main
       - master
-    paths-ignore:
-      - '**.md'
-      - 'doc/**'
-      - 'skills/**'
-      - 'LICENSE'
-      - '.gitignore'
+    paths:
+      - '.github/workflows/build-torch_npu-withNightly-pytorch.yml'
   workflow_dispatch:
     inputs:
       python_version:
@@ -41,6 +33,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 360
+    # Skip if PR is from fast-verify branch (use fast-verify-patch.yml instead)
+    if: github.event_name != 'pull_request' || github.head_ref != 'fast-verify'
 
     steps:
       - name: Install system dependencies
