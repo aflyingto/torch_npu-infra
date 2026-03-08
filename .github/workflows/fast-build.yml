@@ -64,7 +64,7 @@ jobs:
       - name: Install Python build dependencies
         run: |
           pip install --upgrade pip setuptools wheel
-          pip install numpy pyyaml typing_extensions cmake ninja six
+          pip install numpy pyyaml typing_extensions cmake ninja six torchgen
 
       - name: Checkout torch_npu
         uses: actions/checkout@v4
