@@ -66,15 +66,6 @@ jobs:
           pip install --upgrade pip setuptools wheel
           pip install numpy pyyaml typing_extensions cmake ninja six
 
-      - name: Install PyTorch Nightly
-        run: |
-          pip install --pre torch --index-url https://download.pytorch.org/whl/nightly/cpu
-
-      - name: Verify PyTorch installation
-        run: |
-          python -c "import torch; print(f'PyTorch version: {torch.__version__}')"
-          python -c "import torch; print(f'PyTorch path: {torch.__file__}')"
-
       - name: Checkout torch_npu
         uses: actions/checkout@v4
         with:
@@ -86,12 +77,6 @@ jobs:
         run: |
           cd torch_npu
           git submodule update --init --recursive
-
-      - name: Apply PyTorch 2.12+ compatibility patches
-        run: |
-          cd torch_npu
-          git apply --check ../patches/0002-fix-pytorch-2.12-hostblockpool-compatibility.patch
-          git apply ../patches/0002-fix-pytorch-2.12-hostblockpool-compatibility.patch
 
       - name: Build CANN stub libraries
         run: |
