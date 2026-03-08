@@ -64,7 +64,8 @@ jobs:
       - name: Install Python build dependencies
         run: |
           pip install --upgrade pip setuptools wheel
-          pip install numpy pyyaml typing_extensions cmake ninja six
+          pip install pyyaml typing_extensions cmake ninja six
+          pip install numpy==1.21.3
           pip install torch==2.1.0+cpu --index-url https://download.pytorch.org/whl/cpu
 
       - name: Checkout torch_npu
