@@ -6,13 +6,13 @@ on:
       - main
       - master
     paths:
-      - '.github/workflows/fast-verify-patch.yml'
+      - '.github/workflows/fast-build.yml'
   pull_request:
     branches:
       - main
       - master
     paths:
-      - '.github/workflows/fast-verify-patch.yml'
+      - '.github/workflows/fast-build.yml'
   workflow_dispatch:
     inputs:
       python_version:
