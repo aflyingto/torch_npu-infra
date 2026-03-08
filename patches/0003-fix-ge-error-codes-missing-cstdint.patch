@@ -1,0 +1,26 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: CI <ci@example.com>
+Date: Sat, 8 Mar 2026 09:35:00 +0800
+Subject: [PATCH] fix: add missing cstdint include for uint32_t
+
+The ge_error_codes.h uses uint32_t but doesn't include the required header.
+This causes compilation errors with newer GCC versions.
+
+---
+ third_party/acl/inc/ge/ge_error_codes.h | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/third_party/acl/inc/ge/ge_error_codes.h b/third_party/acl/inc/ge/ge_error_codes.h
+index 1111111..2222222 100644
+--- a/third_party/acl/inc/ge/ge_error_codes.h
++++ b/third_party/acl/inc/ge/ge_error_codes.h
+@@ -15,6 +15,7 @@
+ #endif
+ #endif
+
++#include <stdint.h>
+ #include <stddef.h>
+
+ #ifdef __cplusplus
+--
+2.43.0

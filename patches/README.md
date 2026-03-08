@@ -8,6 +8,7 @@
 |------|--------|----------|----------|----------|------|
 | 0001 | 0001-fix-pytorch-main-compatibility.patch | torch_npu/csrc/core/npu/CachingHostAllocator.cpp | PyTorch main 分支 CachingHostAllocatorImpl 接口变化，BlockPool 类型冲突 | 2026-03-07 | 待验证 |
 | 0002 | 0002-fix-pytorch-2.12-hostblockpool-compatibility.patch | torch_npu/csrc/core/npu/CachingHostAllocator.cpp | PyTorch 2.12+ HostBlockPool 结构体成员变化 (pool/unmapped/blocks) | 2026-03-08 | 待验证 |
+| 0003 | 0003-fix-ge-error-codes-missing-cstdint.patch | third_party/acl/inc/ge/ge_error_codes.h | ge_error_codes.h 使用 uint32_t 但缺少 stdint.h 头文件 | 2026-03-08 | 待验证 |
 
 ## 详细说明
 
@@ -120,3 +121,23 @@ error: 'using at::CachingHostAllocatorImpl<...>::BlockPool = struct at::HostBloc
 **相关链接：**
 - Issue: #2
 - 分析报告: analysis-report-fast-build-failure.md
+
+### 0003 - ge_error_codes.h 缺少 stdint.h 头文件
+
+**问题现象：**
+```
+error: 'uint32_t' does not name a type
+static const uint32_t ACL_ERROR_GE_PARAM_INVALID = 145000;
+note: 'uint32_t' is defined in header '<cstdint>'; did you forget to '#include <cstdint>'?
+```
+
+**问题原因：**
+- `ge_error_codes.h` 使用了 `uint32_t` 类型
+- 但只包含了 `<stddef.h>`，没有包含 `<stdint.h>` 或 `<cstdint>`
+- 新版 GCC 编译器对此更严格
+
+**修复方案：**
+在 `#include <stddef.h>` 前添加 `#include <stdint.h>`
+
+**修改位置：**
+- 第 18 行：添加 `#include <stdint.h>`

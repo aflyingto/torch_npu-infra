@@ -76,6 +76,14 @@ jobs:
           path: torch_npu
           submodules: false
 
+      - name: Apply patches
+        run: |
+          cd torch_npu
+          for patch in ../patches/*.patch; do
+            echo "Applying $patch..."
+            git apply --check "$patch" && git apply "$patch" || echo "Patch $patch may not apply cleanly"
+          done
+
       - name: Initialize torch_npu submodules
         run: |
           cd torch_npu
