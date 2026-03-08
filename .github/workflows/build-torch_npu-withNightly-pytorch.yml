@@ -1,4 +1,4 @@
-name: Build torch_npu with latest PyTorch
+name: Build torch_npu with Nightly PyTorch
 
 on:
   push:
@@ -7,13 +7,13 @@ on:
       - master
       - dev-cache
     paths:
-      - '.github/workflows/build-torch-npu.yml'
+      - '.github/workflows/build-torch_npu-withNightly-pytorch.yml'
   pull_request:
     branches:
       - main
       - master
     paths:
-      - '.github/workflows/build-torch-npu.yml'
+      - '.github/workflows/build-torch_npu-withNightly-pytorch.yml'
   workflow_dispatch:
     inputs:
       python_version:
