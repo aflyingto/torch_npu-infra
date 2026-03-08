@@ -5,22 +5,14 @@ on:
     branches:
       - main
       - master
-    paths-ignore:
-      - '**.md'
-      - 'doc/**'
-      - 'skills/**'
-      - 'LICENSE'
-      - '.gitignore'
+    paths:
+      - '.github/workflows/fast-verify-patch.yml'
   pull_request:
     branches:
       - main
       - master
-    paths-ignore:
-      - '**.md'
-      - 'doc/**'
-      - 'skills/**'
-      - 'LICENSE'
-      - '.gitignore'
+    paths:
+      - '.github/workflows/fast-verify-patch.yml'
   workflow_dispatch:
     inputs:
       python_version:

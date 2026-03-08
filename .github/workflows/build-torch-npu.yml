@@ -12,6 +12,7 @@ on:
       - 'skills/**'
       - 'LICENSE'
       - '.gitignore'
+      - '.github/workflows/fast-verify-patch.yml'
   pull_request:
     branches:
       - main
@@ -22,6 +23,7 @@ on:
       - 'skills/**'
       - 'LICENSE'
       - '.gitignore'
+      - '.github/workflows/fast-verify-patch.yml'
   workflow_dispatch:
     inputs:
       python_version:
