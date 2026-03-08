@@ -1,22 +1,20 @@
-From: opencode <opencode@example.com>
-Date: Sun, 08 Mar 2026 14:33:37 +0800
-Subject: [PATCH] Fix PyTorch 2.12 HostBlockPool compatibility by renaming BlockPool to NPUBlockPool
+From: torch_npu-infra <torch_npu-infra@example.com>
+Date: Sat, 8 Mar 2026 00:00:00 +0000
+Subject: [PATCH] Fix PyTorch 2.12+ HostBlockPool API compatibility
 
-This patch renames all occurrences of BlockPool to NPUBlockPool in
-CachingHostAllocator.cpp to avoid naming conflicts with PyTorch 2.12's
-internal BlockPool class. This ensures compatibility when building torch_npu
-against newer versions of PyTorch.
+PyTorch 2.12+ changed HostBlockPool structure:
+- Removed 'pool' member from BlockPool
+- Removed 'unmapped' member
+- Renamed 'blocks' to 'blocks_' (private member)
+- Changed internal implementation to use ska::flat_hash_set
 
-Changes made:
-- Renamed struct BlockPool to struct NPUBlockPool
-- Updated constructor from BlockPool() to NPUBlockPool()
-- Updated all pointer references from BlockPool *pool to NPUBlockPool *pool
-- Updated all reference parameters from BlockPool &pool to NPUBlockPool &pool
-- Updated member variable from BlockPool blocks_pool to NPUBlockPool blocks_pool
+This patch fixes torch_npu to work with PyTorch 2.12+ by:
+1. Renaming torch_npu's BlockPool to NPUBlockPool to avoid conflicts
+2. Keeping torch_npu's own implementation with blocks/unmapped members
+3. Updating all BlockPool references to NPUBlockPool
 
----
 diff --git a/torch_npu/csrc/core/npu/CachingHostAllocator.cpp b/torch_npu/csrc/core/npu/CachingHostAllocator.cpp
-index 738b91bad..28b16da50 100644
+index 738b91b..0286cfe 100644
 --- a/torch_npu/csrc/core/npu/CachingHostAllocator.cpp
 +++ b/torch_npu/csrc/core/npu/CachingHostAllocator.cpp
 @@ -46,10 +46,10 @@ using Comparison = bool (*)(const ExpandableBlock *, const ExpandableBlock *);
@@ -113,6 +111,15 @@ index 738b91bad..28b16da50 100644
      {
          ExpandableBlock key(0);
  
+@@ -1061,7 +1061,7 @@ private:
+         return candidate;
+     }
+ 
+-    bool map_block(ExpandableBlock *to_map, size_t size, BlockPool *map_pool)
++    bool map_block(ExpandableBlock *to_map, size_t size, NPUBlockPool *map_pool)
+     {
+         TORCH_INTERNAL_ASSERT(!to_map->mapped && size <= to_map->size_, PTA_ERROR(ErrCode::VALUE));
+ 
 @@ -1073,7 +1073,7 @@ private:
          TORCH_INTERNAL_ASSERT(mapped_range.ptr == to_map->ptr_ && mapped_range.size >= size,
              PTA_ERROR(ErrCode::INTERNAL));
@@ -132,5 +139,4 @@ index 738b91bad..28b16da50 100644
          ExpandableBlock *candidate = find_expandable_block(pool, size);
          // Candidate is now a list free/unmapped blocks with at least size room:
 
--- 
-2.43.0
+-- 2.43.0
